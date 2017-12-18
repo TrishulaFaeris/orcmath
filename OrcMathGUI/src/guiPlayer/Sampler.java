@@ -120,7 +120,7 @@ public class Sampler extends GUIApplication {
 				}
 			}); 
 			viewObjects.add(cb);
-			viewObjects.add(new DisplayImage());
+			viewObjects.add(new DisplayImage("Rem", "short-hair", "blue"));
 		}
 		
 		public void mouseDragged(MouseEvent m) {
