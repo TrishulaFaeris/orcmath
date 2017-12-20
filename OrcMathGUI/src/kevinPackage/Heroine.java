@@ -7,14 +7,14 @@ import java.util.Scanner;
 import guiTeacher.components.AnimatedComponent;
 import guiTeacher.components.Component;
 
-public class DisplayImage extends AnimatedComponent {
+public class Heroine extends AnimatedComponent {
 
 	public  String name;
 	public String hairStyle;
 	public String eyeColor;
 	public static void main(String[] args) {
 	}
-	public DisplayImage(String name, String hairstyle, String eyecolor) {
+	public Heroine(String name, String hairstyle, String eyecolor) {
 		super(0, 0, 95, 107);
 		addSequence("resources/rem sprite.png", 180, 0, 0, 95, 107, 6);
 		Thread animation = new Thread(this);

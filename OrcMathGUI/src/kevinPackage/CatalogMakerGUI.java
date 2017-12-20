@@ -23,5 +23,5 @@ public class CatalogMakerGUI extends GUIApplication {
 		go.start();
 		
 	}
-
+	
 }

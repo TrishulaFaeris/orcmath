@@ -20,7 +20,7 @@ import guiTeacher.interfaces.KeyedComponent;
 import guiTeacher.interfaces.Visible;
 import guiTeacher.userInterfaces.FileLoader;
 import guiTeacher.userInterfaces.FullFunctionScreen;
-import kevinPackage.DisplayImage;
+import kevinPackage.Heroine;
 
 public class Sampler extends GUIApplication implements FileRequester{
 
@@ -133,7 +133,7 @@ public class Sampler extends GUIApplication implements FileRequester{
 				FileOpenButton fileButton = new FileOpenButton(490, 70, 120, 30, null,Sampler.this);
 				viewObjects.add(fileButton);
 			
-			viewObjects.add(new DisplayImage("Rem", "short-hair", "blue"));
+			viewObjects.add(new Heroine("Rem", "short-hair", "blue"));
 		}
 		
 		public void mouseDragged(MouseEvent m) {
