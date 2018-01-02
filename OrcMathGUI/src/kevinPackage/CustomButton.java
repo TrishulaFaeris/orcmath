@@ -2,10 +2,6 @@ package kevinPackage;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-
-import com.itextpdf.awt.geom.Rectangle;
-
-import guiTeacher.components.Action;
 import guiTeacher.components.Button;
 
 public class CustomButton extends Button {
@@ -37,7 +33,7 @@ public class CustomButton extends Button {
 		
 	}
 	public void setIconColor(Color color) {
-		
+		this.color = color;
 	}
 
 }
