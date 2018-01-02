@@ -33,7 +33,7 @@ public class CustomButton extends Button {
 		
 	}
 	public void setIconColor(Color color) {
-		this.color = color;
+		
 	}
 
 }
