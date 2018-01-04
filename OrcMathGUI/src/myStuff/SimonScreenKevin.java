@@ -19,7 +19,7 @@ public class SimonScreenKevin extends ClickableScreen implements Runnable {
 	public int roundNum;
 	public boolean isUserCorrect;
 	public TextField showRound;
-	public ButtonInterfaceKevin buttons;
+	public ButtonInterfaceKevin button;
 	
 	public SimonScreenKevin(int width, int height) {
 		super(width, height);
@@ -30,10 +30,30 @@ public class SimonScreenKevin extends ClickableScreen implements Runnable {
 	@Override
 	public void initAllObjects(List<Visible> viewObjects) {
 		addButtons();
-		for(ButtonInterfaceKevin b: buttons) {
+		for(ButtonInterfaceKevin b: button) {
 			viewObjects.add(b);
+		}
+		display = getProcess();
+		
 		
 	}
+	private ProgressInterfaceKevin getProcess() {
+		/**
+		Placeholder until partner finishes implementation of ProgressInterface
+		*/
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private void addButtons() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
