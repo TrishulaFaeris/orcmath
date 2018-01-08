@@ -12,12 +12,14 @@ public class SimonGameKevin extends GUIApplication  {
 	
 	public SimonGameKevin(int width, int height) {
 		super(width, height);
+		setVisible(true);
 	}
 
 	@Override
 	public void initScreen() {
 		SimonScreenKevin screen = new SimonScreenKevin(getWidth(), getHeight());
 		setScreen(screen);
+
 	}
 	
 }

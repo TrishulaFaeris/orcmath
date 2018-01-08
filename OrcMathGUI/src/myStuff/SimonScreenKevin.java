@@ -131,7 +131,7 @@ public class SimonScreenKevin extends ClickableScreen implements Runnable{
 
 	private ProgressInterfaceKevin getProgress() 
 	{
-		return null;
+		return new StevenProgress(0,0,30,30);
 	}
 
 	private void addButtons() 
@@ -204,7 +204,7 @@ public class SimonScreenKevin extends ClickableScreen implements Runnable{
 	*/
 	private ButtonInterfaceKevin getAButton() 
 	{
-		return null;
+		return new StevenButton(40,40,20,20,"",null);
 	}
 
 	/**
@@ -212,7 +212,7 @@ public class SimonScreenKevin extends ClickableScreen implements Runnable{
 	*/
 	private MoveInterfaceKevin getMove(int bIndex)
 	{
-	    return null;
+	    return new StevenMove((StevenButton) buttons[bIndex]);
 	}
 
 
