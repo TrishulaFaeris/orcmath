@@ -29,7 +29,7 @@ public class StevenButton extends Button implements ButtonInterfaceKevin {
 			g.fillRect(x,y,getWidth(),getHeight());
 			g.setColor(Color.darkGray);
 		}else {
-			g.setColor(a);
+			g.setColor(Color.blue);
 			g.fillRect(x,y,getWidth(),getHeight());
 			g.setColor(a);
 		}
