@@ -14,6 +14,7 @@ public class StevenButton extends Button implements ButtonInterfaceKevin {
 
 	public StevenButton(int x, int y, int w, int h, String text, Action action) {
 		super(x, y, w, h, "", null);
+		highlighted=false;
 	}
 	
 	public void drawButton(Graphics2D g, boolean hover) {
