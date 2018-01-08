@@ -148,7 +148,7 @@ public class SimonScreenKevin extends ClickableScreen implements Runnable{
 			{
 				final ButtonInterfaceKevin b = getAButton();
 				buttons[i] = b;
-				b.setColor(colors[i]);
+				b.setNewColor(colors[i]);
 				b.setX(100);
 				b.setY(i*100);
 				

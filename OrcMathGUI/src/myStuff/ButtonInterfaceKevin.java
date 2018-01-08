@@ -9,7 +9,7 @@ public interface ButtonInterfaceKevin extends Clickable{
 
 	void highlight();
 
-	void setColor(Color color);
+	void setNewColor(Color color);
 
 	void dim();
 
