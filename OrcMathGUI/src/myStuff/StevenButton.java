@@ -25,13 +25,11 @@ public class StevenButton extends Button implements ButtonInterfaceKevin {
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 				RenderingHints.VALUE_ANTIALIAS_ON);
 		if(highlighted) {
-			g.setColor(Color.BLACK);
-			g.fillRect(x,y,getWidth(),getHeight());
 			g.setColor(Color.darkGray);
-		}else {
-			g.setColor(Color.BLACK);
 			g.fillRect(x,y,getWidth(),getHeight());
+		}else {
 			g.setColor(a);
+			g.fillRect(x,y,getWidth(),getHeight());
 		}
 	}
 	
