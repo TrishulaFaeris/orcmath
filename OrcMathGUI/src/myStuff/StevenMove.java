@@ -8,10 +8,6 @@ public class StevenMove implements MoveInterfaceKevin {
 		this.button=button;
 	}
 
-	@Override
-	public MoveInterfaceKevin getMove(int bIndex) {
-		return null;
-	}
 
 	@Override
 	public ButtonInterfaceKevin getButton() {

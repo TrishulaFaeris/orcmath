@@ -10,23 +10,27 @@ import guiTeacher.components.Button;
 public class StevenButton extends Button implements ButtonInterfaceKevin {
 	
 	private Color a;
+	private boolean highlighted;
 
 	public StevenButton(int x, int y, int w, int h, String text, Action action) {
 		super(x, y, w, h, "", null);
-		
 	}
 	
 	public void drawButton(Graphics2D g, boolean hover) {
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 				RenderingHints.VALUE_ANTIALIAS_ON);
-		g.fillRect(0,0,getWidth(),getHeight());
-		g.setColor(a);
-		
+		if(highlighted) {
+			g.fillRect(0,0,getWidth(),getHeight());
+			g.setColor(Color.darkGray);
+		}else {
+			g.fillRect(0,0,getWidth(),getHeight());
+			g.setColor(a);
+		}
 	}
 	
 	@Override
 	public void highlight() {
-		setColor(Color.darkGray);
+		highlighted=true;
 	}
 
 	@Override
@@ -36,7 +40,7 @@ public class StevenButton extends Button implements ButtonInterfaceKevin {
 
 	@Override
 	public void dim() {
-		setColor(a);
+		highlighted=false;
 
 	}
 
