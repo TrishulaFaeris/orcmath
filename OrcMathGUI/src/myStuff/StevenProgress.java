@@ -10,12 +10,16 @@ public class StevenProgress extends Component implements ProgressInterfaceKevin 
 	private int round;
 	private boolean game;
 	private int seq;
+	private int x;
+	private int y;
 	
 	public StevenProgress(int x, int y, int w, int h) {
 		super(x, y, w, h);
 		game=true;
 		round=1;
 		seq=1;
+		this.x=x;
+		this.y=y;
 	}
 
 	@Override
@@ -41,10 +45,10 @@ public class StevenProgress extends Component implements ProgressInterfaceKevin 
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 				RenderingHints.VALUE_ANTIALIAS_ON);
 		if(game) {
-			g.drawString(""+round, 30, 20);
-			g.drawString(""+seq, 30, 40);
+			g.drawString(""+round, x, y);
+			g.drawString(""+seq, x, y+20);
 		}else {
-			g.drawString("Game over", 30, 20);
+			g.drawString("Game over", x, y);
 		}
 
 	}
