@@ -16,8 +16,8 @@ public class testscreen extends FullFunctionScreen {
 	private int gameTime;
 	private Timer timer;
 	private Button press;
-	private showCountLabel showCount;
-	private showCountLabel timerDisplay;
+	private TextLabel showCount;
+	private TextLabel timerDisplay;
 	/**
 	 * 
 	 */
@@ -33,8 +33,8 @@ public class testscreen extends FullFunctionScreen {
 	@Override
 	public void initAllObjects(List<Visible> viewObjects) {
 		//to disable a button do the "buttonname".setEnabled(boolean)
-		showCount = new showCountLabel(100, 200, 100, 100, "Counter = 0"); //create score board
-		timerDisplay = new showCountLabel(100,300,100,100, "Time"); //create display for timer
+		showCount = new TextLabel(100, 200, 100, 100, "Counter = 0"); //create score board
+		timerDisplay = new TextLabel(100,300,100,100, "Time"); //create display for timer
 		timer = new Timer();
 		TimerTask task = new TimerTask() {
 
@@ -42,17 +42,17 @@ public class testscreen extends FullFunctionScreen {
 			public void run() {
 				startTime--;
 				if(startTime==0) {
-					showCount.setshowCount("Go!");
-					button.setshowCount("Click Me");
+					showCount.setText("Go!");
+					button.setText("Click Me");
 				}
 				else if(startTime>0)
-					showCount.setshowCount(""+startTime);
+					showCount.setText(""+startTime);
 					
 				if(startTime<=0) {
 					gameSec--;
-					timerPrint.setshowCount("Timer: "+gameSec);
+					timerPrint.setText("Timer: "+gameTime);
 					if(gameSec==0) {
-						button.setshowCount("Done");
+						button.setText("Done");
 						button.setEnabled(false);
 						timer.cancel();
 					}
@@ -67,7 +67,7 @@ public class testscreen extends FullFunctionScreen {
 				public void act() {
 					if(startTime <= 0) {
 						increaseCount(); //increase counter
-						showCount.setshowCount("Counter = " +counter); //show score board as changing
+						showCount.setText("Counter = " +counter); //show score board as changing
 					}else {
 						StartTimer();
 					}
