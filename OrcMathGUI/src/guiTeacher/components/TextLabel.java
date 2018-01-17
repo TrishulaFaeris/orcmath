@@ -26,6 +26,11 @@ import java.awt.Graphics2D;
 import guiTeacher.Utilities;
 import guiTeacher.interfaces.TextComponent;
 
+/**
+ * A single-line, non-user-editable text Component
+ * @author bnockles
+ *
+ */
 public class TextLabel extends StyledComponent implements TextComponent{
 
 	//FIELDS
@@ -55,7 +60,10 @@ public class TextLabel extends StyledComponent implements TextComponent{
 		}
 
 
-
+/**
+ * Set the text color for this TextLabel. (Note: calling setTextColor will affect the color for ALL Text in all components)
+ * @param textColor
+ */
 		public void setCustomTextColor(Color textColor) {
 			this.textColor = textColor;
 			update();
@@ -72,11 +80,19 @@ public class TextLabel extends StyledComponent implements TextComponent{
 			return text;
 		}
 		
+		/**
+		 * set the Font size of this TextLabel
+		 * @param float size of the Font.
+		 */
 		public void setSize(float size){
 			this.size = size;
 			setFont(font.deriveFont(size));
 		}
 		
+		/**
+		 * set the Font of this TextLabel
+		 * @param font
+		 */
 		public void setFont(Font font){
 			this.font = font;
 			update();
@@ -98,13 +114,12 @@ public class TextLabel extends StyledComponent implements TextComponent{
 //					RenderingHints.VALUE_ANTIALIAS_ON);
 			g.setColor(this.getTextColor());
 			g.setFont(getFont());
-			if(size!=20){
-				System.out.println("Attempting to print label "+getText()+" with size "+size);
-			}
 			FontMetrics fm = g.getFontMetrics();
 			if(text != null){
 //				Utilities.drawText(g, text, 0, getWidth(), getHeight(), align);
-				g.drawString(text, 0, fm.getHeight());
+				if(align==ALIGN_LEFT) g.drawString(text, 0, fm.getHeight());
+				else if(align == ALIGN_CENTER)g.drawString(text, (getWidth()-fm.stringWidth(text))/2, fm.getHeight());
+				else g.drawString(text, getWidth()-fm.stringWidth(text), fm.getHeight());
 			}
 		}
 

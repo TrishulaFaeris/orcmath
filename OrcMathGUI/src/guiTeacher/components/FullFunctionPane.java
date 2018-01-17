@@ -15,11 +15,11 @@ import guiTeacher.interfaces.Visible;
 
 /**
  * This class is like a FullFunctionScreen but a "subscreen" version.
- * In otehr words, it is not a FocusManager and there can be multiple instances on one single screen
+ * In other words, it is not a FocusManager and there can be multiple instances on one single screen
  * 
  */
 
-public abstract class FullFunctionPane extends ScrollablePane implements KeyedComponent, KeyListener, Dragable, Runnable{
+public class FullFunctionPane extends ScrollablePane implements KeyedComponent, KeyListener, Dragable, Runnable{
 
 	/**
 	 * 
@@ -32,9 +32,13 @@ public abstract class FullFunctionPane extends ScrollablePane implements KeyedCo
 
 	public FullFunctionPane(FocusController focusController, Component parentComponent, int x, int y, int w, int h) {
 		super(focusController, parentComponent, new ArrayList<Visible>(),x, y, w, h);
-		// TODO Auto-generated constructor stub
 	}
 
+	public FullFunctionPane(FocusController focusController, int x, int y, int w, int h) {
+		super(focusController, null, new ArrayList<Visible>(),x, y, w, h);
+	}
+
+	
 	@Override
 	public void initObjects(List<Visible> viewObjects) {
 		super.initObjects(viewObjects);
@@ -87,10 +91,10 @@ public abstract class FullFunctionPane extends ScrollablePane implements KeyedCo
 
 		boolean hoverOverDragable = false;
 		for(Clickable c: clickables){
-			if(c.isHovered(x-getX(), y-getY())){
+			if(c.isVisible() && c.isHovered(x-getX()+contentX, y-getY()+contentY)){
 				if(c instanceof Dragable){
 					Dragable item = (Dragable)c;
-					if(item.setStart(x-getX(),y-getY())){
+					if(item.setStart(x-getX()+contentX,y-getY()+contentY)){
 						draggedItem = item;
 						hoverOverDragable = true;
 					}
@@ -107,14 +111,14 @@ public abstract class FullFunctionPane extends ScrollablePane implements KeyedCo
 
 	@Override
 	public void setFinish(int x, int y) {
-		if(draggedItem != null)draggedItem.setFinish(x - getX(), y - getY());
+		if(draggedItem != null)draggedItem.setFinish(x - getX()+contentX, y - getY()+contentY);
 	}
 
 	@Override
 	public void setHeldLocation(int x, int y) {
 		//		System.out.println("<FullFunctionPane> Coordinates of drag are "+(x - getX())+", "+(y - getY()));
 		if(draggedItem != null){
-			draggedItem.setHeldLocation(x-getX(),y-getY());
+			draggedItem.setHeldLocation(x-getX()+contentX,y-getY()+contentY);
 		}
 
 	}
@@ -157,7 +161,7 @@ public abstract class FullFunctionPane extends ScrollablePane implements KeyedCo
 	public void run(){
 		while(running){
 			update();		
-			containingComponent.update();
+			if(containingComponent != null) containingComponent.update();
 			try {
 				Thread.sleep(30);
 			} catch (InterruptedException e) {

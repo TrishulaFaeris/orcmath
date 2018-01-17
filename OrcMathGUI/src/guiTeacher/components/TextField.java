@@ -32,6 +32,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -40,14 +41,24 @@ import guiTeacher.interfaces.Clickable;
 import guiTeacher.interfaces.Dragable;
 import guiTeacher.interfaces.KeyedComponent;
 import guiTeacher.interfaces.TextComponent;
-import main.OrcMath;
+
+/**
+ * A user-editable Text Component. Designed especially for forms, every TextField has a description that is draw above the field.
+ * @author bnockles
+ *
+ */
 
 public class TextField extends StyledComponent implements KeyedComponent,Clickable, Runnable, Dragable, TextComponent{
 
 	//FIELDS
+	protected BufferedImage borderImage;
 	protected String text;
 	private Font font;
+	private Font labelFont;
 	private float size;
+	private boolean readOnly;
+	private boolean drawBorder;
+	private int verticalAlign;
 	private ArrayList<TextFieldSaveState> history;//keeps track of recent changes
 	private boolean changeMade;//a boolean keeps track of if change was made since last time history was updated
 	private int historyCount;//number of intervals since last update of history. Once count == _HISTORY_UPDATE_LIMIT, an update of history is performed
@@ -81,58 +92,138 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 	private int inputRangeMax;
 	private int inputLength;
 	private String description;
-	private boolean updateDescription;
 
 	public static final int INPUT_TYPE_PLAIN = 0;
 	public static final int INPUT_TYPE_NUMERIC =1;
 	public static final int INPUT_TYPE_CUSTOM =2;
+	public static final int TOP = -1;
+	public static final int CENTER = 0;
+	public static final int BOTTOM = 1;
 
+	/**
+	 * Use for a text field with no description
+	 * @param x x-coordinate within context of parent ComponentContainer
+	 * @param y y-coordinate within context of parent ComponentContainer
+	 * @param w pixel width
+	 * @param h pixel height
+	 * @param text - the initial value in the text field
+	 */
 	public TextField(int x, int y, int w, int h, String text) {
 		super(x, y-DESCRIPTION_SPACE, w, h+DESCRIPTION_SPACE);
 		this.text = text;
-		setDefaults();
 		description = null;
+		setDefaults();
 		update();
 	}
 
+	/**
+	 * 
+	 * @param x x-coordinate within context of parent ComponentContainer
+	 * @param y y-coordinate within context of parent ComponentContainer
+	 * @param w pixels width
+	 * @param h pixel height
+	 * @param text - the initial value in the text field
+	 * @param description - the description drawn above the text field
+	 */
 	public TextField(int x, int y, int w, int h, String text, String description) {
 		super(x, y-DESCRIPTION_SPACE, w, h+DESCRIPTION_SPACE);
 		this.text = text;
-		setDefaults();
 		this.description = description;
+		setDefaults();
 		update();
 	}
 
+	/**
+	 * Sets all defalut falues for the field
+	 */
 	protected void setDefaults(){
-		updateDescription = true;
 		history=new ArrayList<TextFieldSaveState>();
 		historyCount = 0;
 		changeMade = false;
+		drawBorder = true;
+		readOnly = false;
+		verticalAlign = BOTTOM;
 		inputType = INPUT_TYPE_PLAIN;
 		inputRangeMin =0;
 		inputRangeMax =0;
 		inputLength = 0;
 		editable = true;
 		font = getBaseFont();
+		labelFont = getBaseFont();
 		size = 20;
 		running = false;
 		cursorIndex = getText().length();
 		selectIndex = cursorIndex;
 		history.add(new TextFieldSaveState(this.text,cursorIndex,cursorIndex));
+		resetBorder();
+	}
+
+	public BufferedImage getImage(){
+		if(drawBorder){
+			BufferedImage canvas = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g = canvas.createGraphics();
+			g.drawImage(super.getImage(), 0, 0, null);
+			g.drawImage(borderImage, 0, 0, null);
+			return canvas;
+		}else{
+			return super.getImage();
+		}
 	}
 
 
+
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	/**
+	 * Use to disable user input
+	 * @param readOnly
+	 */
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
+	}
+
+	public boolean isDrawBorder() {
+		return drawBorder;
+	}
+
+	/**
+	 * A rounded box is draw n around the field only when drawBorder is true
+	 * @param drawBorder
+	 */
+	public void setDrawBorder(boolean drawBorder) {
+		this.drawBorder = drawBorder;
+	}
+
+	public int getVerticalAlign() {
+		return verticalAlign;
+	}
+
+	public void setVerticalAlign(int verticalAlign) {
+		this.verticalAlign = verticalAlign;
+	}
 
 	public String getDescription() {
 		return description;
 	}
 
+	/**
+	 * The description of a TextField is drawn above the field box
+	 * @param description
+	 */
 	public void setDescription(String description) {
 		this.description = description;
-		updateDescription = true;
-		update();
+		resetBorder();
 	}
 
+	
+	/**
+	 * 
+	 * @param min ASCII value of lowest allowed entry, inclusive
+	 * @param max  ASCII value of lowest allowed entry, inclusive
+	 * @param length number of characters that can be entered into this field
+	 */
 	public void setInputType(int min, int max, int length) {
 		inputType = INPUT_TYPE_CUSTOM;
 		inputRangeMin = min;
@@ -140,6 +231,10 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 		inputLength = length;
 	}
 
+	/**
+	 * Set the input type. Accepted Values include TextField.PLAIN and TextField.NUMERIC as well as TextField.CUSTOM
+	 * @param type
+	 */
 	public void setInputType(int type){
 		inputType = type;
 	}
@@ -176,22 +271,22 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 		update();
 	}
 
-	public void update(){
-		if(updateDescription){
-			clear();
-			super.update();
-			updateDescription = false;
-		}else{
-			super.update();			
-		}
-	}
+	//	public void update(){
+	//		if(updateDescription){
+	//			clear();
+	//			super.update();
+	//			updateDescription = false;
+	//		}else{
+	//			super.update();			
+	//		}
+	//	}
 
 	public int calculateIndexOfClick(String s, FontMetrics fm, int x){
 		int check = 0;
 		while(check < s.length() && fm.stringWidth(s.substring(0,check+1)) < x){
 			check++;
 		}
-//		System.out.println(check + " for string "+s+" with length "+s.length());
+		//		System.out.println(check + " for string "+s+" with length "+s.length());
 		return check;
 	}
 
@@ -204,67 +299,96 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 		xEnd+=X_MARGIN;
 		g.fillRect(xStart, y, xEnd-xStart, fm.getHeight());
 	}
-	
+
+	protected int getTop(FontMetrics fm){
+		if(verticalAlign == BOTTOM)return getHeight()-fm.getDescent();
+		else if(verticalAlign == CENTER)return DESCRIPTION_SPACE+(getHeight()-DESCRIPTION_SPACE)/2;
+		else return BORDER+DESCRIPTION_SPACE+fm.getAscent();
+	}
+
 	@Override
 	public void update(Graphics2D g) {
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 				RenderingHints.VALUE_ANTIALIAS_ON);
 		g.setColor(getBackgroundColor());
-		int spaceHeight = getHeight()-2*BORDER-DESCRIPTION_SPACE-2;
-		g.fillRoundRect(BORDER+1,BORDER+DESCRIPTION_SPACE+1,getWidth()-2*BORDER-2,spaceHeight,8,8);
+		int spaceHeight = getHeight()-DESCRIPTION_SPACE;
+		g.fillRoundRect(1,DESCRIPTION_SPACE,getWidth()-2,spaceHeight,8,8);
 		g.setFont(getFont());
 		FontMetrics fm = g.getFontMetrics();
 		if(findCursor){
 			cursorIndex = calculateIndexOfClick(getText(), fm, relativeXClick);
-			if(!shiftHeld)selectIndex = cursorIndex;
+			if(!shiftHeld){
+				selectIndex = cursorIndex;
+			}
 			findCursor = false;
 			cursorShowing  = true;
 		}
+		int top = getTop(fm);
 		if(selectIndex != cursorIndex){
-			
+
 			int xStart = (selectIndex< cursorIndex)?selectIndex:cursorIndex;
 			//			xStart+=X_MARGIN;
 			int xEnd = (selectIndex> cursorIndex)?selectIndex:cursorIndex;
-			
-			int top = BORDER+DESCRIPTION_SPACE+fm.getDescent();
-			highlight(g,fm,xStart,xEnd,getText(),top);
-			
+
+			//			int top = BORDER+DESCRIPTION_SPACE+fm.getDescent();
+			highlight(g,fm,xStart,xEnd,getText(),top-fm.getHeight());
+
 
 		}
 		g.setColor(getForeground());
-		if(getText() != null) g.drawString(getText(), X_MARGIN, getHeight()-fm.getDescent());
+		if(getText() != null) g.drawString(getText(), X_MARGIN, top);
 
-		if(cursorShowing && running && selectIndex == cursorIndex){
+		try{
+		if(!isReadOnly() && cursorShowing && running && selectIndex == cursorIndex){
 			g.setColor(Color.black);
 			int base = getHeight()-fm.getDescent();
 			//			if(cursorIndex> getText().length())cursorIndex = getText().length();
 			int x = fm.stringWidth(getText().substring(0,cursorIndex))+X_MARGIN;
 			g.drawLine(x, base, x, base - fm.getHeight());
 		}
-		drawBorder(fm, g);
+		}catch(StringIndexOutOfBoundsException siobe){
+		}
+		//		drawBorder(g);
 	}
 
-	public void drawBorder(FontMetrics fm, Graphics2D g){
-		if(updateDescription){
-			Color bc = (running)? getActiveBorderColor():getInactiveBorderColor();
-			g.setColor(bc);
-			g.setStroke(new BasicStroke(BORDER));
-			g.drawRoundRect(BORDER,BORDER+DESCRIPTION_SPACE,getWidth()-2*BORDER,getHeight()-2*BORDER-DESCRIPTION_SPACE,8,8);
-			if(description != null){
-				g.setColor(getForeground());
-				g.drawString(description, BORDER, DESCRIPTION_SPACE-fm.getDescent());
+	public void drawBorder(Graphics2D g){
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+		FontMetrics fm = g.getFontMetrics(getLabelFont());
+		Color bc = (running)? getActiveBorderColor():getInactiveBorderColor();
+		g.setColor(bc);
+		g.setStroke(new BasicStroke(BORDER));
+		g.drawRoundRect(BORDER,BORDER+DESCRIPTION_SPACE,getWidth()-2*BORDER,getHeight()-2*BORDER-DESCRIPTION_SPACE,8,8);
+		if(description != null){
+			g.setColor(getForeground());
+			g.setFont(getLabelFont());
+			g.drawString(description, BORDER, DESCRIPTION_SPACE-fm.getDescent());
 
-			}
 		}
 	}
 
+	protected void selectAll(){
+		selectIndex = 0;
+		cursorIndex = getText().length();
+		update();
+	}
+
+	protected void deleteAndInsert(String s){
+		insert(s);
+	}
+
 	private void shortcut(char c){
+		boolean removeAfterCopy=false;
+		if(c=='x'){
+			removeAfterCopy = true;
+			c = 'c';
+		}
 		if(c == 'z'){
 			if(historyIndex < history.size()-1)historyIndex++;
 			TextFieldSaveState state = history.get(historyIndex);
-			cursorIndex = state.cursorPoint;
-			selectIndex= state.selectPoint;
+
 			setText(state.text);
+			setCursors(state.cursorPoint, state.selectPoint);
 
 		}else if(c == 'v'){
 			try {
@@ -277,8 +401,7 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 			} 
 
 		}else if(c == 'a'){
-			selectIndex = 0;
-			cursorIndex = getText().length();
+			selectAll();
 		}else if(c =='c'){
 			int low = (selectIndex < cursorIndex)?selectIndex:cursorIndex;
 			int high = (selectIndex > cursorIndex)?selectIndex:cursorIndex;
@@ -289,9 +412,18 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 				clpbrd.setContents(stringSelection, null);
 			}
 		}
+		if(removeAfterCopy){
+			deleteAndInsert("");
+		}
 
 	}
 
+
+
+	protected void setCursors(int cursorPoint, int selectPoint) {
+		setCursor(cursorPoint);
+		setSelect(selectPoint);
+	}
 
 	protected void increaseCursor(int spaces){
 		cursorIndex+=spaces;
@@ -327,61 +459,63 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 		}else{
 			selectIndex = cursorIndex;	
 		}
-		
-//		if(low<high-1){
-//			//when deleting more than one 
-//		}else{
-//			decreaseCursor();
-//		}
+
+		//		if(low<high-1){
+		//			//when deleting more than one 
+		//		}else{
+		//			decreaseCursor();
+		//		}
 
 		update();
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		char c = e.getKeyChar();
-		shiftHeld = false;//disable shift held, otherwise cursor behaves like arrow key function
+		if(!isReadOnly()){
+			char c = e.getKeyChar();
+			shiftHeld = false;//disable shift held, otherwise cursor behaves like arrow key function
 
 
 
-		String t = getText();
-		changeMade = true;
-		historyIndex = 0;
-		historyIndex=0;
-		if(inputType == INPUT_TYPE_PLAIN && c >=32 && c <127){
-			insert(""+c);
+			String t = getText();
+			changeMade = true;
+			historyIndex = 0;
+			historyIndex=0;
+			if(inputType == INPUT_TYPE_PLAIN && c >=32 && c <127){
+				insert(""+c);
 
-		}else if(inputType == INPUT_TYPE_NUMERIC && (c== 46 || c >=48 && c <57)){
+			}else if(inputType == INPUT_TYPE_NUMERIC && (c== 46 || c >=48 && c <=57)){
 
-			insert(""+c);
+				insert(""+c);
 
-		}else if(c==127 || c==8){
-			//delete is pressed
-			int low = (selectIndex< cursorIndex)?selectIndex:cursorIndex;
-			int high = (selectIndex> cursorIndex)?selectIndex:cursorIndex;
-			if(high > text.length())high = text.length();//THIS IS A WORK AROUND. IT SHOULDN'T BE NECESSARY. WHY iS HIGH OUTTA BOUNDS?
-			//when selector is not over more than one letter
-			if(low == high && low>0){
-				low=high-1;
-			}else{//save after deleting multiple characters
-				history.add(0,new TextFieldSaveState(text, cursorIndex, selectIndex));
+			}else if(c==127 || c==8){
+				//delete is pressed
+				int low = (selectIndex< cursorIndex)?selectIndex:cursorIndex;
+				int high = (selectIndex> cursorIndex)?selectIndex:cursorIndex;
+				if(high > text.length())high = text.length();//work around THIS IS A WORK AROUND. IT SHOULDN'T BE NECESSARY. WHY iS HIGH OUTTA BOUNDS?
+				//			System.out.println("(TextField) deleting with low "+low+", high "+high);
+				//when selector is not over more than one letter
+				if(low == high && low>0){
+					low=high-1;
+				}else{//save after deleting multiple characters
+					history.add(0,new TextFieldSaveState(text, cursorIndex, selectIndex));
+				}
+				remove(low,high);
+
+			}else if(inputType == INPUT_TYPE_CUSTOM && t.length()<inputLength && c>=inputRangeMin && c<=inputRangeMax){
+				insert(c+"");
 			}
-			remove(low,high);
-
-		}else if(inputType == INPUT_TYPE_CUSTOM && t.length()<inputLength && c>=inputRangeMin && c<=inputRangeMax){
-			insert(c+"");
 		}
-
 	}
 
 	public int getSelectIndex(){
 		return selectIndex;
 	}
-	
+
 	public boolean isShiftHeld(){
 		return shiftHeld;
 	}
-	
+
 	/**
 	 * 
 	 * @return index of cursor after delete key is pressed. In TexTBoxes, this returns the last index of the previous line
@@ -404,18 +538,37 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 		}else if(e.getKeyCode() == KeyEvent.VK_SHIFT){
 			shiftHeld = true;
 			ignoreDismiss=true;
-		}else{
-			if(e.getKeyCode() == KeyEvent.VK_LEFT){
-				decreaseCursor(1);
-				update();
-			}else if(e.getKeyCode() == KeyEvent.VK_RIGHT){
-				if(cursorIndex <getText().length()){
-					increaseCursor(1);
-					update();
+		}else if(e.getKeyCode() == KeyEvent.VK_LEFT){
+			if(!ignoreDismiss)shiftHeld=false;
+			int change = 1;
+			if(!shiftHeld && cursorIndex > selectIndex){
+				change = cursorIndex-selectIndex;
+				if(cursorIndex+change < 0){
+					change = cursorIndex;
 				}
-
+			}else if(!shiftHeld && cursorIndex < selectIndex){
+				change = 0;
 			}
+			decreaseCursor(change);
+			update();
+		}else if(e.getKeyCode() == KeyEvent.VK_RIGHT){
+			if(!ignoreDismiss)shiftHeld=false;
+			int change = 1;
+			if(!shiftHeld && cursorIndex < selectIndex){
+				change = -cursorIndex+selectIndex;
+				if(cursorIndex+change > getText().length()){
+					change = getText().length()-cursorIndex;
+				}
+			}else if(!shiftHeld && cursorIndex > selectIndex){
+				change = 0;
+			}
+
+			increaseCursor(change);
+			update();
+
+
 		}
+
 
 	}
 
@@ -428,9 +581,11 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 			ignoreDismiss=false;
 		}
 	}
-	
+
 	protected void setSelect(int x){
-		selectIndex = x;
+		if(x<0)selectIndex = 0;
+		else if(x>getText().length())selectIndex = getText().length();
+		else selectIndex = x;
 	}
 
 	protected void setCursor(int x){
@@ -457,21 +612,23 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 	public String toString(){
 		return "TextBox with description + \""+description+"\"";
 	}
-	
-	public void setFocus(boolean b) {
-		System.out.println("setting focus to "+this);
-		updateDescription = true;
-		if(b && !running && editable){
 
+	public void setFocus(boolean b) {
+		if(b && !running && editable){
+			//			System.out.println("Focus set on "+toString());
 			running = true;
 			Thread cursor = new Thread(this);
 			cursor.start();
+			resetBorder();
 		}else if(!b){
+			//			System.out.println("Focus removed from "+toString());
 			running = false;
 			resetSelect();
+			resetBorder();
+
 		}
 	}
-	
+
 	/**
 	 * sets the select cursor to the cursor
 	 */
@@ -481,28 +638,69 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 		update();
 	}
 
+	/**
+	 * Set the value for this TextField. 
+	 * @param s
+	 */
 	public void setText(String s){
 		this.text = s;
-		update();
 	}
+	
 
+	/**
+	 * @return the current value of the Field
+	 */
 	public String getText(){
 		return text;
 	}
 
+	/**
+	 * 
+	 * @param size the size of the Font inside the field
+	 */
 	public void setSize(float size){
 		this.size = size;
 		font = font.deriveFont(size);
 		update();
 	}
 
-	public void setFont(Font font){
+	/**
+	 * Set the font of the description
+	 * @param font
+	 */
+	public void setLabelFont(Font font){
+		this.labelFont = font;
+		resetBorder();
+	}
+
+
+/**
+ * 
+ * @return the font for the TextLabel's description
+ */
+	public Font getLabelFont() {
+		return labelFont;
+	}
+
+	public void setFont(Font font) {
 		this.font = font;
 		update();
 	}
 
+	/**
+	 * 
+	 * @return the font for the text inside the field
+	 */
 	public Font getFont(){
 		return font;
+	}
+
+	/**
+	 * clears the image of the border and redraws it
+	 */
+	public void resetBorder(){
+		borderImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+		drawBorder(borderImage.createGraphics());
 	}
 
 	public float getSize(){
@@ -554,30 +752,36 @@ public class TextField extends StyledComponent implements KeyedComponent,Clickab
 	public void setShiftHeld(boolean b){
 		shiftHeld = b;
 	}
-	
+
 	@Override
 	public boolean setStart(int x, int y) {
 		findCursor = true;
-		
+
 		update();
-		return editable;
+		return editable && !shiftHeld;
 	}
 
 	@Override
 	public void setFinish(int x, int y) {
-		FontMetrics fm = getImage().createGraphics().getFontMetrics();
+		FontMetrics fm = getImage().createGraphics().getFontMetrics(getFont());
 		selectIndex = calculateIndexOfClick(getText(), fm, x-getX()-X_MARGIN);
 		relativeX = x - getX();
-		ignoreDismiss = false;
+		if(!shiftHeld) ignoreDismiss = false;
 		update();
 	}
 
 	@Override
 	public void setHeldLocation(int x, int y) {
-		FontMetrics fm = getImage().createGraphics().getFontMetrics();
+		FontMetrics fm = getImage().createGraphics().getFontMetrics(getFont());
 		selectIndex = calculateIndexOfClick(getText(), fm, x-getX()-X_MARGIN);
 		relativeX = x - getX();
 		update();
 	}
+	
+	public void setDimensions(int width, int height) {
+		super.setDimensions(width, height);
+		resetBorder();
+	}
+
 
 }

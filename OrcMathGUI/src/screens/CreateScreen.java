@@ -25,12 +25,12 @@ import java.util.List;
 
 import com.orcmath.local.Problem;
 
+import components.LaTeXReference;
 import components.MenuButton;
 import components.TopicAccordion;
 import components.UpdateNotification;
 import data.CustomProblemData;
 import data.Worksheet;
-import guiTeacher.components.Accordion;
 import guiTeacher.components.Action;
 import guiTeacher.components.Button;
 import guiTeacher.components.Graphic;
@@ -40,10 +40,11 @@ import guiTeacher.components.ScrollableDragablePane;
 import guiTeacher.components.SearchBox;
 import guiTeacher.components.SimpleTable;
 import guiTeacher.components.SimpleTable.MatchingLengthException;
+import guiTeacher.components.SimpleTableRow;
 import guiTeacher.components.TableHeader;
 import guiTeacher.components.TextBox;
-import guiTeacher.components.TextBox;
 import guiTeacher.components.TextField;
+import guiTeacher.interfaces.TextComponent;
 import guiTeacher.interfaces.Visible;
 import main.OrcMath;
 
@@ -51,6 +52,10 @@ public class CreateScreen extends OrcMathScreen {
 
 	//fields
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2521723056380224274L;
 	//	protected static String worksheetName = "This was created by OrcMath";
 	//	protected static String FILE = "Lessons/" + subject +"/" + subject + " " +unit+"/"+unit+"."+lesson+"/resources/"+worksheetName+".pdf";
 	//TODO: Images are saving images to a PDF folder that is static. Make this dynamic (ClassworkProblems.class)
@@ -63,12 +68,12 @@ public class CreateScreen extends OrcMathScreen {
 	private static int identifier;//TODO once applet is made, this is no longer static
 
 
-	private ArrayList<CustomProblemData> customProblems;
 	private int customProblemIndex;
 
 	private static final int BUTTON_WIDTH = 90;
 	private static final int BUTTON_HEIGHT = 40;
 	private File saveDirectory;
+	private LaTeXReference reference;
 	private TextField fileName;
 	private TextField heading;
 	private TextBox instructionsField;
@@ -77,14 +82,15 @@ public class CreateScreen extends OrcMathScreen {
 	private SimpleTable outputTable;
 	private ScrollableDragablePane tableScroll;
 	private ProgressBar progressBar;
+	private boolean refrenceShowing;
 
 	private Graphic orcWorker;
 	private SearchBox search;
-	
+
 
 	public static final int MARGIN = 20;
 	private static final int _ACCORDION_WIDTH= 410;
-	private static final int _FIELD_WIDTH= 410;
+	private static final int _FIELD_WIDTH= 440;
 	private static final int _INDEX_OF_QUANTITY = 0;
 	private static final int _INDEX_OF_QUESTION_TYPE = 1;
 	private static final int _INDEX_OF_DIFFICULTY = 2;
@@ -96,16 +102,20 @@ public class CreateScreen extends OrcMathScreen {
 
 	@Override
 	public void initAllObjects(List<Visible> viewObjects) {
-		customProblems = new ArrayList<CustomProblemData>();
+		refrenceShowing = false;
+//		customProblems = new ArrayList<CustomProblemData>();
 		customProblemIndex = 0;
 		search = new SearchBox(MARGIN, MARGIN+30, _ACCORDION_WIDTH, 30);
 		viewObjects.add(search);
 		questionsByTopic = new TopicAccordion(this, MARGIN,MARGIN+65,_ACCORDION_WIDTH, search);
 		int textFieldHeight = 30;
 		int vertSpace = 5+TextField.DESCRIPTION_SPACE;
+		reference = new LaTeXReference(this, fieldMargin, MARGIN+25+vertSpace, _FIELD_WIDTH, 500);
+		//		reference.setVisible(false);
+		viewObjects.add(reference);
 		fileName = new TextField(fieldMargin, MARGIN+25+vertSpace, _FIELD_WIDTH, textFieldHeight, "Worksheet","File Name");
 		heading = new TextField(fieldMargin, fileName.getY()+fileName.getHeight()+vertSpace, _FIELD_WIDTH, textFieldHeight, "Practice","Header");
-		instructionsField = new TextBox(fieldMargin,heading.getY()+heading.getHeight()+vertSpace,_FIELD_WIDTH,200,"Somewhere, far away from here, I saw stars... start that I could reach, yeah.","Main Instructions");
+		instructionsField = new TextBox(fieldMargin,heading.getY()+heading.getHeight()+vertSpace,_FIELD_WIDTH,200,"Show your work.","Main Instructions");
 
 		//output table
 		addTable(viewObjects);
@@ -113,8 +123,8 @@ public class CreateScreen extends OrcMathScreen {
 
 		MenuButton mb = new MenuButton(MARGIN, getHeight()-MenuButton.HEIGHT-MARGIN-UpdateNotification.NOTIFICATION_HEIGHT);
 		addGenerateButton(viewObjects);
-		
-		
+
+
 		int space = 40;
 		int progressBarHeight = 50;
 		orcWorker = new Graphic(generate.getX()-60, getHeight()-MARGIN-UpdateNotification.NOTIFICATION_HEIGHT-generate.getHeight(), .35, "resources/doing homework.jpg");
@@ -122,8 +132,8 @@ public class CreateScreen extends OrcMathScreen {
 		int progressBarWidth = orcWorker.getX()-mb.getX()-mb.getWidth()-space*2;
 		progressBar = new ProgressBar(MARGIN + mb.getWidth()+space, getHeight() - UpdateNotification.NOTIFICATION_HEIGHT-progressBarHeight, progressBarWidth, progressBarHeight);
 		progressBar.setBarColor(new Color(51,204,204));
-		
-		
+
+
 		viewObjects.add(questionsByTopic);
 		viewObjects.add(fileName);
 		viewObjects.add(heading);
@@ -135,7 +145,7 @@ public class CreateScreen extends OrcMathScreen {
 
 
 	}
-	
+
 	public void setOrcWorkerVisible(boolean b){
 		orcWorker.setVisible(b);
 	}
@@ -170,7 +180,7 @@ public class CreateScreen extends OrcMathScreen {
 				String[] types = outputTable.getAllColumnValuesAtIndex(_INDEX_OF_QUESTION_TYPE);
 				if(types.length >=0){
 					//						new BuildCounter(types);
-					
+
 					int[] difficultyValues = outputTable.getAllColumnIntValuesAtIndex(_INDEX_OF_DIFFICULTY);
 					String[] quantitiesTexts = outputTable.getAllColumnValuesAtIndex(_INDEX_OF_QUANTITY);
 					int[] quantities = new int[quantitiesTexts.length]; 
@@ -192,7 +202,8 @@ public class CreateScreen extends OrcMathScreen {
 
 					Settings s = OrcMath.settings;
 					Worksheet cps = new Worksheet();
-					cps.setCustomProblems(customProblems);
+
+					cps.setCustomProblems(customProblemsInTable());
 					cps.setNumberOfPages(s.getPages());
 					cps.setNumberOfProblems(sum);
 					cps.setNumberOfColumns(s.getColumns());
@@ -214,7 +225,7 @@ public class CreateScreen extends OrcMathScreen {
 					//						cps.createPdf();
 					progressBar.setTask(cps);
 					progressBar.startTask(new Action() {
-						
+
 						@Override
 						public void act() {
 							generate.setEnabled(true);
@@ -231,6 +242,22 @@ public class CreateScreen extends OrcMathScreen {
 		});
 		viewObjects.add(generate);
 
+	}
+
+	protected ArrayList<CustomProblemData> customProblemsInTable() {
+		ArrayList<CustomProblemData> includedProblems = new ArrayList<CustomProblemData>();
+		for(SimpleTableRow data: outputTable.getRows()){
+			try{
+				TextComponent t = data.getValues()[_INDEX_OF_QUESTION_TYPE];
+				if(t instanceof CustomProblemData){
+					CustomProblemData cpd = (CustomProblemData)t;
+					includedProblems.add(cpd);	
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		return includedProblems;
 	}
 
 	private void addTable(List<Visible> viewObjects) {
@@ -262,12 +289,12 @@ public class CreateScreen extends OrcMathScreen {
 	//called when a custom problem is created
 	public void addQuestion(String problemLaTeX, String solutionLaTeX) {
 		String solution = (solutionLaTeX.equals(LaTeXEditor.PLACEHOLDER_TEXT))?"":solutionLaTeX;
-		customProblems.add(new CustomProblemData(problemLaTeX, solution));
-		
+//		customProblems.add(new CustomProblemData(problemLaTeX, solution));
+
 		String[] data = new String[3];
 		data[_INDEX_OF_DIFFICULTY] = "N/A";
 		data[_INDEX_OF_QUANTITY] = "1";
-		data[_INDEX_OF_QUESTION_TYPE] = Problem.CUSTOM_TAG+ " ";
+		data[_INDEX_OF_QUESTION_TYPE] = Problem.CUSTOM_TAG;
 		outputTable.addRow(data);
 		boolean[] edit = {false,false,false};
 		try{
@@ -276,11 +303,10 @@ public class CreateScreen extends OrcMathScreen {
 		}catch(MatchingLengthException e){
 			e.printStackTrace();
 		}
-		outputTable.setColumnContent(_INDEX_OF_QUESTION_TYPE, new Link(0,0,70,20,Problem.CUSTOM_TAG+ " "+(++customProblemIndex), new Action() {
-			
+		outputTable.setColumnContent(_INDEX_OF_QUESTION_TYPE, new CustomProblemData(problemLaTeX, solution,++customProblemIndex, new Action() {
+
 			@Override
 			public void act() {
-				System.out.println("Link clicked");
 				questionsByTopic.viewCustomProblem(problemLaTeX, solutionLaTeX);
 			}
 		} ));
@@ -288,6 +314,24 @@ public class CreateScreen extends OrcMathScreen {
 		tableScroll.update();
 	}
 
+	/**
+	 * called by LaTeX editor when latex is being typed
+	 */
+	public void showGuide(boolean on) {
+		if(refrenceShowing != on){
+			fileName.setVisible(!on);
+			heading.setVisible(!on);
+			instructionsField.setVisible(!on);
+			tableScroll.setVisible(!on);
+			reference.setVisible(on);
+			refrenceShowing = on;
+			update();
+		}
+	}
+
+	public LaTeXReference getReference() {
+		return reference;
+	}
 
 
 
