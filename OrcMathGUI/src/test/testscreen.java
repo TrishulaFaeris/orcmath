@@ -6,7 +6,7 @@ import java.util.TimerTask;
 
 import guiTeacher.components.Action;
 import guiTeacher.components.Button;
-import guiTeacher.components.showCountLabel;
+import guiTeacher.components.TextLabel;
 import guiTeacher.interfaces.Visible;
 import guiTeacher.userInterfaces.FullFunctionScreen;
 
@@ -26,7 +26,8 @@ public class testscreen extends FullFunctionScreen {
 	public testscreen(int width, int height) {
 		super(width, height);
 		counter = 0;
-		startTime = 0;
+		startTime = 4;
+		gameTime = 6;
 		// TODO Auto-generated constructor stub
 	}
 
@@ -43,17 +44,19 @@ public class testscreen extends FullFunctionScreen {
 				startTime--;
 				if(startTime==0) {
 					showCount.setText("Go!");
-					button.setText("Click Me");
+					press.setText("Click Me");
 				}
-				else if(startTime>0)
+				else if(startTime>0) {
 					showCount.setText(""+startTime);
-					
+					press.setEnabled(false);
+				}
 				if(startTime<=0) {
-					gameSec--;
-					timerPrint.setText("Timer: "+gameTime);
-					if(gameSec==0) {
-						button.setText("Done");
-						button.setEnabled(false);
+					press.setEnabled(true);
+					gameTime--;
+					timerDisplay.setText("Timer: "+gameTime);
+					if(gameTime==0) {
+						press.setText("Done");
+						press.setEnabled(false);
 						timer.cancel();
 					}
 				}
@@ -70,13 +73,13 @@ public class testscreen extends FullFunctionScreen {
 						showCount.setText("Counter = " +counter); //show score board as changing
 					}else {
 						StartTimer();
+						
 					}
 					
 				}
 
 				private void StartTimer() {
 					timer.schedule(task,0,1000);
-					
 				}
 			});
 			
